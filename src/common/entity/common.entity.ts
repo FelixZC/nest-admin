@@ -9,7 +9,7 @@ import {
   VirtualColumn,
 } from 'typeorm'
 
-// 如果觉得前端转换时间太麻烦，并且不考虑通用性的话，可以在服务端进行转换，eg: @UpdateDateColumn({ name: 'updated_at', transformer })
+// 如果觉得前端转换时间太麻烦，并且不考虑通用性的话，可以在服务端进行转换
 // const transformer: ValueTransformer = {
 //   to(value) {
 //     return value
@@ -19,6 +19,9 @@ import {
 //   },
 // }
 
+/**
+ * 抽象基类 CommonEntity，提供了最基本的实体属性，如创建时间和更新时间.
+ */
 export abstract class CommonEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number
@@ -30,6 +33,9 @@ export abstract class CommonEntity extends BaseEntity {
   updatedAt: Date
 }
 
+/**
+ * 抽象基类 CompleteEntity，继承自 CommonEntity，添加了创建者、更新者等属性，以及虚拟列.
+ */
 export abstract class CompleteEntity extends CommonEntity {
   @ApiHideProperty()
   @Exclude()
@@ -42,7 +48,7 @@ export abstract class CompleteEntity extends CommonEntity {
   updateBy: number
 
   /**
-   * 不会保存到数据库中的虚拟列，数据量大时可能会有性能问题，有性能要求请考虑在 service 层手动实现
+   * 不会保存到数据库中的虚拟列，数据量大时可能会有性能问题，有性能要求请考虑在 service 层手动实现.
    * @see https://typeorm.io/decorator-reference#virtualcolumn
    */
   @ApiProperty({ description: '创建者' })

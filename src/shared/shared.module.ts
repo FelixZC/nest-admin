@@ -12,6 +12,10 @@ import { MailerModule } from './mailer/mailer.module'
 
 import { RedisModule } from './redis/redis.module'
 
+/**
+ * 定义一个全局模块 SharedModule，它集合了应用中常用的服务和功能模块
+ * 使用 @Global 装饰器将此模块标记为全局模块，可以在任何地方无需额外导入即可使用
+ */
 @Global()
 @Module({
   imports: [

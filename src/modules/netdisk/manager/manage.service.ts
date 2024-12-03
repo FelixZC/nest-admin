@@ -26,6 +26,7 @@ export class NetDiskManageService {
     @Inject(OssConfig.KEY) private qiniuConfig: IOssConfig,
     private userService: UserService,
   ) {
+    // 创建认证对象
     this.mac = new qiniu.auth.digest.Mac(
       this.qiniuConfig.accessKey,
       this.qiniuConfig.secretKey,

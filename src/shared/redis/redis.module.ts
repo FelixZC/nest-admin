@@ -3,6 +3,7 @@ import { CacheModule } from '@nestjs/cache-manager'
 import { Global, Module, Provider } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 
+// 导入 Redis 存储和配置相关类型
 import { redisStore } from 'cache-manager-ioredis-yet'
 import { RedisOptions } from 'ioredis'
 
@@ -14,9 +15,11 @@ import { REDIS_PUBSUB } from './redis.constant'
 import { RedisSubPub } from './redis-subpub'
 import { RedisPubSubService } from './subpub.service'
 
+// 定义模块的提供者数组
 const providers: Provider[] = [
   CacheService,
   {
+    // 创建 REDIS_PUBSUB 提供者，用于处理 Redis 的发布/订阅功能
     provide: REDIS_PUBSUB,
     useFactory: (configService: ConfigService<ConfigKeyPaths>) => {
       const redisOptions: RedisOptions = configService.get<IRedisConfig>('redis')
@@ -34,10 +37,11 @@ const providers: Provider[] = [
   },
 ]
 
+// 定义全局 Redis 模块
 @Global()
 @Module({
   imports: [
-    // cache
+    // 配置缓存模块
     CacheModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService<ConfigKeyPaths>) => {
@@ -52,7 +56,7 @@ const providers: Provider[] = [
       },
       inject: [ConfigService],
     }),
-    // redis
+    // 配置 Redis 模块
     NestRedisModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService<ConfigKeyPaths>) => ({
@@ -65,4 +69,5 @@ const providers: Provider[] = [
   providers,
   exports: [...providers, CacheModule],
 })
+// 导出 Redis 模块
 export class RedisModule {}

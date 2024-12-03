@@ -11,6 +11,9 @@ import { AppConfig, IAppConfig } from '~/config'
 import { ErrorEnum } from '~/constants/error-code.constant'
 import { randomValue } from '~/utils'
 
+/**
+ * 提供邮件发送服务的类，包括验证码发送和验证等功能
+ */
 @Injectable()
 export class MailerService {
   constructor(
@@ -19,14 +22,23 @@ export class MailerService {
     private mailerService: NestMailerService,
   ) {}
 
+  /**
+   * 记录验证码发送日志，包括验证码本身、发送IP等信息
+   * @param to 收件人邮箱
+   * @param code 验证码
+   * @param ip 发送验证码的IP地址
+   */
   async log(to: string, code: string, ip: string) {
+    // 计算当天剩余时间，用于设置验证码限制的过期时间
     const getRemainTime = () => {
       const now = dayjs()
       return now.endOf('day').diff(now, 'second')
     }
 
+    // 设置验证码到Redis，有效期为5分钟
     await this.redis.set(`captcha:${to}`, code, 'EX', 60 * 5)
 
+    // 以下代码块用于设置验证码发送的限制，包括IP限制和邮箱限制
     const limitCountOfDay = await this.redis.get(`captcha:${to}:limit-day`)
     const ipLimitCountOfDay = await this.redis.get(`ip:${ip}:send:limit-day`)
 
@@ -46,28 +58,41 @@ export class MailerService {
     )
   }
 
+  /**
+   * 验证码校验，如果验证码不匹配则抛出业务异常
+   * @param to 收件人邮箱
+   * @param code 用户输入的验证码
+   * @throws 如果验证码不正确，抛出BusinessException异常
+   */
   async checkCode(to, code) {
     const ret = await this.redis.get(`captcha:${to}`)
     if (ret !== code)
       throw new BusinessException(ErrorEnum.INVALID_VERIFICATION_CODE)
 
+    // 验证码校验通过后，删除Redis中的验证码
     await this.redis.del(`captcha:${to}`)
   }
 
+  /**
+   * 检查验证码发送限制，包括IP限制和邮箱接收限制
+   * @param to 收件人邮箱
+   * @param ip 发送验证码的IP地址
+   * @throws 如果达到限制，抛出BusinessException异常
+   */
   async checkLimit(to, ip) {
     const LIMIT_TIME = 5
 
-    // ip限制
+    // IP发送限制检查
     const ipLimit = await this.redis.get(`ip:${ip}:send:limit`)
     if (ipLimit)
       throw new BusinessException(ErrorEnum.TOO_MANY_REQUESTS)
 
-    // 1分钟最多接收1条
+    // 邮箱接收限制检查
     const limit = await this.redis.get(`captcha:${to}:limit`)
     if (limit)
       throw new BusinessException(ErrorEnum.TOO_MANY_REQUESTS)
 
-    // 1天一个邮箱最多接收5条
+    // 每天每个邮箱最多接收5条验证码
     let limitCountOfDay: string | number = await this.redis.get(
       `captcha:${to}:limit-day`,
     )
@@ -78,7 +103,7 @@ export class MailerService {
       )
     }
 
-    // 1天一个ip最多发送5条
+    // 每天每个IP最多发送5条验证码
     let ipLimitCountOfDay: string | number = await this.redis.get(
       `ip:${ip}:send:limit-day`,
     )
@@ -90,6 +115,14 @@ export class MailerService {
     }
   }
 
+  /**
+   * 发送邮件，支持文本和HTML两种格式
+   * @param to 收件人邮箱
+   * @param subject 邮件主题
+   * @param content 邮件内容
+   * @param type 邮件内容类型，'text' 或 'html'
+   * @returns Promise<any>
+   */
   async send(
     to,
     subject,
@@ -112,6 +145,13 @@ export class MailerService {
     }
   }
 
+  /**
+   * 发送验证码邮件
+   * @param to 收件人邮箱
+   * @param code 验证码，如果未提供则自动生成
+   * @returns Promise<{ to: string, code: string }>
+   * @throws 如果邮件发送失败，抛出BusinessException异常
+   */
   async sendVerificationCode(to, code = randomValue(4, '1234567890')) {
     const subject = `[${this.appConfig.name}] 验证码`
 

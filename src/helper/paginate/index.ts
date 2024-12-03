@@ -1,3 +1,4 @@
+// 导入TypeORM相关模块
 import {
   FindManyOptions,
   FindOptionsWhere,
@@ -6,13 +7,20 @@ import {
   SelectQueryBuilder,
 } from 'typeorm'
 
+// 导入自定义模块
 import { createPaginationObject } from './create-pagination'
 import { IPaginationOptions, PaginationTypeEnum } from './interface'
 import { Pagination } from './pagination'
 
+// 定义默认分页限制和默认页码
 const DEFAULT_LIMIT = 10
 const DEFAULT_PAGE = 1
 
+/**
+ * 解析分页选项
+ * @param options 分页选项
+ * @returns 返回解析后的页码、每页数量和分页类型
+ */
 function resolveOptions(
   options: IPaginationOptions,
 ): [number, number, PaginationTypeEnum] {
@@ -25,6 +33,14 @@ function resolveOptions(
   ]
 }
 
+/**
+ * 对Repository进行分页查询
+ * @template T 实体类型
+ * @param repository 实体仓库
+ * @param options 分页选项
+ * @param searchOptions 查询选项
+ * @returns 返回分页结果的Promise
+ */
 async function paginateRepository<T>(
   repository: Repository<T>,
   options: IPaginationOptions,
@@ -51,6 +67,13 @@ async function paginateRepository<T>(
   })
 }
 
+/**
+ * 对QueryBuilder进行分页查询
+ * @template T 实体类型
+ * @param queryBuilder 查询构建器
+ * @param options 分页选项
+ * @returns 返回分页结果的Promise
+ */
 async function paginateQueryBuilder<T>(
   queryBuilder: SelectQueryBuilder<T>,
   options: IPaginationOptions,
@@ -72,6 +95,13 @@ async function paginateQueryBuilder<T>(
   })
 }
 
+/**
+ * 对原始查询进行分页
+ * @template T 实体类型
+ * @param queryBuilder 查询构建器
+ * @param options 分页选项
+ * @returns 返回分页结果的Promise
+ */
 export async function paginateRaw<T>(
   queryBuilder: SelectQueryBuilder<T>,
   options: IPaginationOptions,
@@ -96,6 +126,13 @@ export async function paginateRaw<T>(
   })
 }
 
+/**
+ * 对原始查询和实体进行分页，同时返回原始数据和实体数据
+ * @template T 实体类型
+ * @param queryBuilder 查询构建器
+ * @param options 分页选项
+ * @returns 返回包含分页结果和原始数据的Promise
+ */
 export async function paginateRawAndEntities<T>(
   queryBuilder: SelectQueryBuilder<T>,
   options: IPaginationOptions,
@@ -126,16 +163,14 @@ export async function paginateRawAndEntities<T>(
   ]
 }
 
-export async function paginate<T extends ObjectLiteral>(
-  repository: Repository<T>,
-  options: IPaginationOptions,
-  searchOptions?: FindOptionsWhere<T> | FindManyOptions<T>,
-): Promise<Pagination<T>>
-export async function paginate<T>(
-  queryBuilder: SelectQueryBuilder<T>,
-  options: IPaginationOptions,
-): Promise<Pagination<T>>
-
+/**
+ * 分页函数，支持Repository和QueryBuilder
+ * @template T 实体类型
+ * @param repositoryOrQueryBuilder 实体仓库或查询构建器
+ * @param options 分页选项
+ * @param searchOptions 查询选项
+ * @returns 返回分页结果的Promise
+ */
 export async function paginate<T extends ObjectLiteral>(
   repositoryOrQueryBuilder: Repository<T> | SelectQueryBuilder<T>,
   options: IPaginationOptions,

@@ -8,6 +8,9 @@ import {
 } from 'class-validator'
 import { DataSource, ObjectType, Repository } from 'typeorm'
 
+/**
+ * 定义验证条件接口
+ */
 interface Condition {
   entity: ObjectType<any>
   // 如果没有指定字段则使用当前验证的属性作为查询依据
@@ -22,6 +25,12 @@ interface Condition {
 export class EntityExistConstraint implements ValidatorConstraintInterface {
   constructor(private dataSource: DataSource) {}
 
+  /**
+   * 实现验证逻辑
+   * @param value 要验证的值
+   * @param args 验证参数
+   * @returns Promise<boolean> 验证结果
+   */
   async validate(value: string, args: ValidationArguments) {
     let repo: Repository<any>
 
@@ -44,6 +53,11 @@ export class EntityExistConstraint implements ValidatorConstraintInterface {
     return !!item
   }
 
+  /**
+   * 定义默认错误消息
+   * @param args 验证参数
+   * @returns string 错误消息
+   */
   defaultMessage(args: ValidationArguments) {
     if (!args.constraints[0])
       return 'Model not been specified!'
@@ -53,9 +67,9 @@ export class EntityExistConstraint implements ValidatorConstraintInterface {
 }
 
 /**
- * 数据存在性验证
+ * 数据存在性验证装饰器工厂函数
  * @param entity Entity类或验证条件对象
- * @param validationOptions
+ * @param validationOptions 验证选项
  */
 function IsEntityExist(
   entity: ObjectType<any>,

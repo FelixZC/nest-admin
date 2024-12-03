@@ -12,6 +12,9 @@ import { RoleEntity } from '~/modules/system/role/role.entity'
 
 import { RoleDto, RoleQueryDto, RoleUpdateDto } from './role.dto'
 
+/**
+ * 角色服务类，负责处理与角色相关的操作
+ */
 @Injectable()
 export class RoleService {
   constructor(
@@ -23,7 +26,10 @@ export class RoleService {
   ) {}
 
   /**
-   * 列举所有角色：除去超级管理员
+   * 列举所有角色，排除超级管理员角色
+   * @param page 当前页码
+   * @param pageSize 每页大小
+   * @returns 返回分页的角色数据
    */
   async findAll({
     page,
@@ -33,7 +39,14 @@ export class RoleService {
   }
 
   /**
-   * 查询角色列表
+   * 根据查询条件获取角色列表
+   * @param page 当前页码
+   * @param pageSize 每页大小
+   * @param name 角色名称
+   * @param value 角色值
+   * @param remark 备注
+   * @param status 状态
+   * @returns 返回分页的角色数据
    */
   async list({
     page,
@@ -59,7 +72,9 @@ export class RoleService {
   }
 
   /**
-   * 根据角色获取角色信息
+   * 根据角色ID获取角色信息
+   * @param id 角色ID
+   * @returns 返回角色信息和关联的菜单ID列表
    */
   async info(id: number) {
     const info = await this.roleRepository
@@ -77,6 +92,11 @@ export class RoleService {
     return { ...info, menuIds: menus.map(m => m.id) }
   }
 
+  /**
+   * 删除角色
+   * @param id 角色ID
+   * @throws 如果尝试删除超级管理员角色，则抛出错误
+   */
   async delete(id: number): Promise<void> {
     if (id === ROOT_ROLE_ID)
       throw new Error('不能删除超级管理员')
@@ -84,7 +104,10 @@ export class RoleService {
   }
 
   /**
-   * 增加角色
+   * 创建新角色
+   * @param menuIds 菜单ID列表
+   * @param data 角色数据
+   * @returns 返回新创建的角色ID
    */
   async create({ menuIds, ...data }: RoleDto): Promise<{ roleId: number }> {
     const role = await this.roleRepository.save({
@@ -99,7 +122,9 @@ export class RoleService {
 
   /**
    * 更新角色信息
-   * 如果传入的menuIds为空，则清空sys_role_menus表中存有的关联数据，参考新增
+   * @param id 角色ID
+   * @param menuIds 菜单ID列表
+   * @param data 角色数据
    */
   async update(id, { menuIds, ...data }: RoleUpdateDto): Promise<void> {
     await this.roleRepository.update(id, data)
@@ -113,7 +138,9 @@ export class RoleService {
   }
 
   /**
-   * 根据用户id查找角色信息
+   * 根据用户ID查找角色信息
+   * @param id 用户ID
+   * @returns 返回角色ID列表
    */
   async getRoleIdsByUser(id: number): Promise<number[]> {
     const roles = await this.roleRepository.find({
@@ -128,6 +155,11 @@ export class RoleService {
     return []
   }
 
+  /**
+   * 根据角色ID列表获取角色值列表
+   * @param ids 角色ID列表
+   * @returns 返回角色值列表
+   */
   async getRoleValues(ids: number[]): Promise<string[]> {
     return (
       await this.roleRepository.findBy({
@@ -136,6 +168,11 @@ export class RoleService {
     ).map(r => r.value)
   }
 
+  /**
+   * 检查用户是否具有管理员角色
+   * @param uid 用户ID
+   * @returns 如果用户具有管理员角色，则返回true，否则返回false
+   */
   async isAdminRoleByUser(uid: number): Promise<boolean> {
     const roles = await this.roleRepository.find({
       where: {
@@ -151,12 +188,19 @@ export class RoleService {
     return false
   }
 
+  /**
+   * 检查角色列表中是否包含管理员角色
+   * @param rids 角色ID列表
+   * @returns 如果列表中包含管理员角色，则返回true，否则返回false
+   */
   hasAdminRole(rids: number[]): boolean {
     return rids.includes(ROOT_ROLE_ID)
   }
 
   /**
-   * 根据角色ID查找是否有关联用户
+   * 根据角色ID检查是否有关联用户
+   * @param id 角色ID
+   * @returns 如果角色有关联用户，则返回true，否则返回false
    */
   async checkUserByRoleId(id: number): Promise<boolean> {
     return this.roleRepository.exist({

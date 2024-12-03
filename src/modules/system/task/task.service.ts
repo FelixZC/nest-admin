@@ -42,7 +42,7 @@ export class TaskService implements OnModuleInit {
     private moduleRef: ModuleRef,
     private reflector: Reflector,
     @InjectRedis() private redis: Redis,
-  ) {}
+  ) { }
 
   /**
    * module init

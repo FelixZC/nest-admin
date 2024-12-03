@@ -33,6 +33,13 @@ export class AuthService {
     @Inject(AppConfig.KEY) private appConfig: IAppConfig,
   ) {}
 
+  /**
+   * 验证用户凭据
+   * @param credential 用户名或邮箱
+   * @param password 密码
+   * @returns 用户信息，不含密码
+   * @throws {BusinessException} 如果用户不存在或密码错误
+   */
   async validateUser(credential: string, password: string): Promise<any> {
     const user = await this.userService.findUserByUserName(credential)
 
@@ -53,7 +60,12 @@ export class AuthService {
 
   /**
    * 获取登录JWT
-   * 返回null则账号密码有误，不存在该用户
+   * @param username 用户名
+   * @param password 密码
+   * @param ip 登录IP
+   * @param ua 用户代理
+   * @returns 登录令牌
+   * @throws {BusinessException} 如果用户不存在或密码错误
    */
   async login(
     username: string,
@@ -91,7 +103,10 @@ export class AuthService {
   }
 
   /**
-   * 效验账号密码
+   * 校验账号密码
+   * @param username 用户名
+   * @param password 密码
+   * @throws {BusinessException} 如果密码错误
    */
   async checkPassword(username: string, password: string) {
     const user = await this.userService.findUserByUserName(username)
@@ -101,12 +116,20 @@ export class AuthService {
       throw new BusinessException(ErrorEnum.INVALID_USERNAME_PASSWORD)
   }
 
+  /**
+   * 记录登录日志
+   * @param uid 用户ID
+   * @param ip 登录IP
+   * @param ua 用户代理
+   */
   async loginLog(uid: number, ip: string, ua: string) {
     await this.loginLogService.create(uid, ip, ua)
   }
 
   /**
    * 重置密码
+   * @param username 用户名
+   * @param password 新密码
    */
   async resetPassword(username: string, password: string) {
     const user = await this.userService.findUserByUserName(username)
@@ -116,6 +139,8 @@ export class AuthService {
 
   /**
    * 清除登录状态信息
+   * @param user 用户信息
+   * @param accessToken 登录令牌
    */
   async clearLoginStatus(user: IAuthUser, accessToken: string): Promise<void> {
     const exp = user.exp ? (user.exp - Date.now() / 1000).toFixed(0) : this.securityConfig.jwtExprire
@@ -128,6 +153,8 @@ export class AuthService {
 
   /**
    * 获取菜单列表
+   * @param uid 用户ID
+   * @returns 菜单列表
    */
   async getMenus(uid: number) {
     return this.menuService.getMenus(uid)
@@ -135,24 +162,46 @@ export class AuthService {
 
   /**
    * 获取权限列表
+   * @param uid 用户ID
+   * @returns 权限列表
    */
   async getPermissions(uid: number): Promise<string[]> {
     return this.menuService.getPermissions(uid)
   }
 
+  /**
+   * 获取权限缓存
+   * @param uid 用户ID
+   * @returns 权限列表
+   */
   async getPermissionsCache(uid: number): Promise<string[]> {
     const permissionString = await this.redis.get(genAuthPermKey(uid))
     return permissionString ? JSON.parse(permissionString) : []
   }
 
+  /**
+   * 设置权限缓存
+   * @param uid 用户ID
+   * @param permissions 权限列表
+   */
   async setPermissionsCache(uid: number, permissions: string[]): Promise<void> {
     await this.redis.set(genAuthPermKey(uid), JSON.stringify(permissions))
   }
 
+  /**
+   * 获取用户密码版本
+   * @param uid 用户ID
+   * @returns 密码版本
+   */
   async getPasswordVersionByUid(uid: number): Promise<string> {
     return this.redis.get(genAuthPVKey(uid))
   }
 
+  /**
+   * 获取用户登录令牌
+   * @param uid 用户ID
+   * @returns 登录令牌
+   */
   async getTokenByUid(uid: number): Promise<string> {
     return this.redis.get(genAuthTokenKey(uid))
   }

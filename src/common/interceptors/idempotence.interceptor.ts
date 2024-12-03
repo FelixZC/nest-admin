@@ -20,8 +20,10 @@ import { getRedisKey } from '~/utils/redis.util'
 
 import { HTTP_IDEMPOTENCE_KEY, HTTP_IDEMPOTENCE_OPTIONS } from '../decorators/idempotence.decorator'
 
+// 用于存放幂等性的 Redis Key 前缀
 const IdempotenceHeaderKey = 'x-idempotence'
 
+// 幂等性选项接口
 export interface IdempotenceOption {
   errorMessage?: string
   pendingMessage?: string
@@ -49,6 +51,7 @@ export interface IdempotenceOption {
   disableGenerateKey?: boolean
 }
 
+// 幂等性拦截器，用于处理重复请求
 @Injectable()
 export class IdempotenceInterceptor implements NestInterceptor {
   constructor(
@@ -56,6 +59,7 @@ export class IdempotenceInterceptor implements NestInterceptor {
     private readonly cacheService: CacheService,
   ) {}
 
+  // 拦截器的主要逻辑
   async intercept(context: ExecutionContext, next: CallHandler) {
     const request = context.switchToHttp().getRequest<FastifyRequest>()
 
@@ -126,6 +130,7 @@ export class IdempotenceInterceptor implements NestInterceptor {
     )
   }
 
+  // 生成幂等性的 Redis Key
   private generateKey(req: FastifyRequest) {
     const { body, params, query = {}, headers, url } = req
 
