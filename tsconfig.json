@@ -23,5 +23,6 @@
     "forceConsistentCasingInFileNames": false,
     "skipLibCheck": true
   },
+  "include": ["src/**/*", "types/**/*"],
   "exclude": ["node_modules", "scripts", "dist"]
 }

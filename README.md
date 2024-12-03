@@ -72,7 +72,7 @@
 
 ## 快速体验
 
-启动成功后，通过 <http://localhost:7001/api-docs/> 访问。
+启动成功后，通过 <http://localhost:7654/api-docs/> 访问。
 
 ```bash
 pnpm docker:up
@@ -132,7 +132,7 @@ pnpm install
 ```
 
 - 运行
-  启动成功后，通过 <http://localhost:7001/api-docs/> 访问。
+  启动成功后，通过 <http://localhost:7654/api-docs/> 访问。
 
 ```bash
 pnpm dev

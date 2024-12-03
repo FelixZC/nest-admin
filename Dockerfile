@@ -2,18 +2,25 @@
 # FROM 表示设置要制作的镜像基于哪个镜像，FROM指令必须是整个Dockerfile的第一个指令，如果指定的镜像不存在默认会自动从Docker Hub上下载。
 # 指定我们的基础镜像是node，latest表示版本是最新, 如果要求空间极致，可以选择lts-alpine
 # 使用 as 来为某一阶段命名
-FROM node:20-slim AS base
+FROM node:20 AS base
 
 ARG PROJECT_DIR
 
 ENV DB_HOST=mysql \
-    APP_PORT=7001 \
+    APP_PORT=7654 \
     PNPM_HOME="/pnpm" \
     PATH="$PNPM_HOME:$PATH"
 
+# 安装 pnpm
+# RUN corepack enable \
+# && corepack prepare pnpm@latest --activate
 
-RUN corepack enable \
-    && yarn global add pm2
+RUN npm config set registry https://registry.npmmirror.com
+RUN npm install -g pnpm
+RUN pnpm config set registry https://registry.npmmirror.com 
+
+# 安装全局工具
+RUN npm install -g pm2
 
 # WORKDIR指令用于设置Dockerfile中的RUN、CMD和ENTRYPOINT指令执行命令的工作目录(默认为/目录)，该指令在Dockerfile文件中可以出现多次，
 # 如果使用相对路径则为相对于WORKDIR上一次的值，
@@ -34,12 +41,6 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-l
 FROM base AS build
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run build
-
-
-# mirror acceleration
-# RUN npm config set registry https://registry.npmmirror.com
-# RUN pnpm config set registry https://registry.npmmirror.com
-# RUN npm config rm proxy && npm config rm https-proxy
 
 FROM base
 COPY --from=prod-deps $PROJECT_DIR/node_modules $PROJECT_DIR/node_modules
